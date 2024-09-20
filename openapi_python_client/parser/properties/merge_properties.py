@@ -3,6 +3,7 @@ from __future__ import annotations
 from openapi_python_client.parser.properties.date import DateProperty
 from openapi_python_client.parser.properties.datetime import DateTimeProperty
 from openapi_python_client.parser.properties.file import FileProperty
+from openapi_python_client.parser.properties.model_property import ModelProperty
 
 __all__ = ["merge_properties"]
 
@@ -80,6 +81,16 @@ def _merge_same_type(prop1: Property, prop2: Property) -> Property | None | Prop
         if isinstance(inner_property, PropertyError):
             return PropertyError(detail=f"can't merge list properties: {inner_property.detail}")
         prop1.inner_property = inner_property
+
+    if isinstance(prop1, ModelProperty) and isinstance(prop2, ModelProperty):
+        # The logic here is overly simplistic. To be really correct, we should be treating this as an
+        # allOf between prop1 and prop2, which could require generating a new class (unless one of them
+        # is already derived from the other). But for now, we'll just completely override the class
+        # and use the one from prop2.
+        merged = _merge_common_attributes(prop1, prop2)
+        if isinstance(merged, PropertyError):
+            return merged
+        return evolve(merged, class_info=prop2.class_info)
 
     # For all other property types, there aren't any special attributes that affect validation, so just
     # apply the rules for common attributes like "description".

@@ -237,3 +237,10 @@ def test_merge_lists(int_property_factory, list_property_factory, string_propert
     )
 
     assert isinstance(merge_properties(list_prop_1, list_prop_3), PropertyError)
+
+
+def test_merge_models(model_property_factory, config):
+    model_1 = model_property_factory(class_info=Class.from_string(string="Model1", config=config))
+    model_2 = model_property_factory(class_info=Class.from_string(string="Model2", config=config))
+
+    assert merge_properties(model_1, model_2) == evolve(model_1, class_info=model_2.class_info)
